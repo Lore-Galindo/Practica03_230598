@@ -1,58 +1,62 @@
-const express=require('express')
-const session=require('express-session')
-const app=express();
+const express = require('express');
+const session = require('express-session');
 
+const app = express();
+
+// Configuración de la sesión
 app.use(session({
-    secret: 'mi-clave-secreta', //Secreto para firmar la cookie de sesión
-    resave: false,              //No resguardar la sesión si no ha sido modificada
-    saveUninitialized: true,    //Guarda la sesión aunque no haya sido inicializada
-    cookie: {secure: false}     //Usar secure: true sólo si usas HTTPS
+    secret: 'mi-clave-secreta',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }
 }));
 
-//Middleware para mostrar detalles de la sesión
-app.use((req, res, next)=>{
-    if(req.session) {
-        if (!req.session.createAt) {
-            //req.session.createAt = new Date(); //Asignamos la fecha de creación de la sesión
-            req.session.createAt = new Date().toISOString();  // Guardamos la fecha como string ISO
+// Middleware para mostrar detalles de la sesión
+app.use((req, res, next) => {
+    if (req.session) {
+        if (!req.session.createdAt) {
+            req.session.createdAt = new Date();
         }
-        req.session.lastAccess = new Date().toISOString();//Date(); //Asignamos la última vez que se accedió a la sesión
+        req.session.lastAcces = new Date();
     }
     next();
 });
 
 // Ruta para mostrar la información de la sesión
-app.get('/session', (req, res) => {
-    if(req.session) {
+app.get('/session/:nombre', (req, res) => {
+    if (req.session) {
         const sessionId = req.session.id;
-        // Convertimos las fechas string a objetos Date
-        const createAt = new Date(req.session.createAt);
-        const lastAccess = new Date(req.session.lastAccess);
-        // Calculamos la duración
-        const sessionDuration = Math.floor((new Date() - createAt) / 1000);
-        
+        const createdAt = req.session.createdAt;
+        const lastAcces = req.session.lastAcces;
+        const sessionDuration = (new Date() - createdAt) / 1000;
+        const nombre1 = req.params.nombre;
+
         res.send(`
-            <h1>Detalles de la sesión</h1>
-            <p><strong>ID de la sesión:</strong> ${sessionId}</p>
-            <p><strong>Fecha de creación de la sesión:</strong> ${createAt.toISOString()}</p>
-            <p><strong>Último acceso:</strong> ${lastAccess.toISOString()}</p>
-            <p><strong>Duración de la sesión (en segundos):</strong> ${sessionDuration}</p>
+        <h1>Detalles de la sesión</h1>
+        <p><strong>Id de la sesión:</strong> ${sessionId}</p>
+        <p><strong>Fecha de creación de la sesión:</strong> ${createdAt}</p>
+        <p><strong>Último acceso:</strong> ${lastAcces}</p>
+        <p><strong>Duración de la sesión (en segundos):</strong> ${sessionDuration}</p>
+        <p><strong>Nombre de quien inició sesión:</strong> ${nombre1}</p>
         `);
     } else {
-        res.send('<h1>No hay sesión activa.</h1>');
+        res.send('No hay sesión activa');
     }
 });
 
-// El resto del código permanece igual...
-app.get('/logout', (req, res)=> {
+// Ruta para cerrar la sesión
+app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
-        if(err) {
-            return res.send('Error al cerrar la sesión.');
+        if (err) {
+            return res.send('Error al cerrar sesión.');
         }
-        res.send('<h1>Sesión cerrada exitosamente.</h1>')
-    })
-})
+        res.send('<h1>Sesión cerrada exitosamente.</h1>');
+    });
+});
 
+// Iniciar el servidor en el puerto 3000
 app.listen(3000, () => {
     console.log('Servidor corriendo en el puerto 3000');
-})
+});
+
+
